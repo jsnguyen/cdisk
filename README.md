@@ -1,13 +1,12 @@
 # cdisk
 
-Term project for Disk Dynamics at UCSD. This is a study for the the circumplanetary disk around PDS70c.
+Term project for PHYS239 Disk and their Dynamics at UCSD. This is a study of the the circumplanetary disk around PDS70c.
 
 # Requirements
 * Python 3.6+
 * numpy
 * scipy
 * matplotlib
-* [REBOUND](https://rebound.readthedocs.io/en/latest/)
 * [FARGO3D](https://fargo3d.bitbucket.io/)
 
 # How to Run
