@@ -1,0 +1,8 @@
+*.swp
+.DS_Store
+.ipynb_checkpoints
+*.mp4
+*.npy
+*.txt
+*.pdf
+__pycache__
