@@ -6,4 +6,4 @@ NCPU=4
 
 cd ${FARGODIR}
 
-mpirun -np ${NCPU} ./fargo3d setups/mmr/mmr.par
+mpirun -np ${NCPU} ./fargo3d setups/cdi/cdi.par
