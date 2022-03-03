@@ -4,8 +4,9 @@ import pickle
 from glob import glob
 
 import numpy as np
-from matplotlib import pyplot as plt
 
+from matplotlib import pyplot as plt
+from matplotlib.colors import LogNorm
 import matplotlib.cm as cm
 import matplotlib.animation as animation
 
@@ -88,7 +89,7 @@ def main():
         X = R*np.cos(PHI)
         Y = R*np.sin(PHI)
 
-        ax.pcolormesh(X,Y, density, cmap=cm.Oranges_r, edgecolor=(0,0,0,0.1), linewidth=0.005)
+        ax.pcolormesh(X,Y, density, cmap=cm.Oranges_r, shading='flat', snap=True, edgecolor=(0,0,0,0.01), linewidth=0.005)
         ax.set_aspect("equal")
 
         figure_output_folder = './plots'

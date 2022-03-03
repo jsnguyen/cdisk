@@ -23,8 +23,8 @@ Frame                            F
 DT                               0.6283185307179586
 Ninterm                          1
 Ntot                             10
-OutputDir                        /Users/jsn/landing/data/cdi_0059
+OutputDir                        /Users/jsn/landing/data/cdi_0060
 Spacing                          log
 PlanetConfig                     planets/cdi.cfg
-Ymin                             0.08
+Ymin                             0.8
 Ymax                             1.8
