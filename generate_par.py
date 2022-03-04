@@ -9,11 +9,11 @@ def generate_par(out_folder):
 
     sim_units = {}
     sim_units['mass'] = 2 # M_J
-    sim_units['length'] = 0.25 # au
+    sim_units['length'] = 0.40 # au
     sim_units['G'] = 0.03763 # au^3 / (M_J * yr^2)
     sim_units['time'] = 2*np.pi*np.sqrt(sim_units['length']**3 / (sim_units['G'] * sim_units['mass']))
 
-    power = 6
+    power = 7
     
     print('Making cdisk parameter file...')
 
@@ -33,16 +33,15 @@ def generate_par(out_folder):
                   'Eccentricity':        0.0,
                   'ExcludeHill':         'no',
                   'IndirectTerm':        'Yes',
-                  'HillRadius':          0.45 / sim_units['length'],
                   'Nx':                  3*(2**power),
                   'Ny':                  2**power,
                   'Xmin':                -np.pi,
                   'Xmax':                 np.pi,
                   'OmegaFrame':          0.0, # sqrt(1/r1)
                   'Frame':               'F',
-                  'DT':                  2*np.pi/10,
-                  'Ninterm':             1,
-                  'Ntot':                10,
+                  'DT':                  2*np.pi/100,
+                  'Ninterm':             5,
+                  'Ntot':                int(1e6),
                   'OutputDir':           out_folder,
                   'Spacing':             'log'
                   }
@@ -50,8 +49,8 @@ def generate_par(out_folder):
 
     # disk specific parameters
     parameters['PlanetConfig'] = 'planets/cdi.cfg'
-    parameters['Ymin'] = 0.2 / sim_units['length']
-    parameters['Ymax'] = 0.45 / sim_units['length']
+    parameters['Ymin'] = 0.01 / sim_units['length']
+    parameters['Ymax'] = 0.5 / sim_units['length']
 
     par_filename = './cdi/cdi.par'
 
@@ -67,8 +66,6 @@ def generate_par(out_folder):
     sim_units_pickle_filename = 'sim_units.pickle'
     with open(sim_units_pickle_filename, 'wb') as f:
         pickle.dump(sim_units, f)
-
-
 
 def main():
 

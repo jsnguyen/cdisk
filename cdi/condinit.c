@@ -39,7 +39,7 @@ void Init() {
 
       //rho[l] = SIGMA0 * pow(REFERENCERADIUS/r, 5.0/4.0);
       
-      rho[l] = (MASSACCRETION / (3.0*PI*viscosity)) * (sqrt(HILLRADIUS/r) - 1.0);
+      rho[l] = (MASSACCRETION / (3.0*PI*viscosity)) * (sqrt(YMAX/r) - 1.0);
 
 #ifdef ISOTHERMAL
       cs[l] = soundspeed;
