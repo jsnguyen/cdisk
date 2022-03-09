@@ -1,7 +1,7 @@
 import os
 import pickle
-
 from glob import glob
+from multiprocessing import Pool
 
 from PIL import Image
 
@@ -13,18 +13,75 @@ import matplotlib.animation as animation
 from matplotlib import font_manager
 from matplotlib.colors import LogNorm
 
-def read_fargo_data(data_path, parameters, sim_units):
+from tqdm import tqdm
+
+from units import *
+
+def read_fargo_data(data_path, parameters):
     phi = np.linspace(parameters['Xmin'], parameters['Xmax'], parameters['Nx']+1)
-    r = np.geomspace(parameters['Ymin']*sim_units['length'],parameters['Ymax']*sim_units['length'],parameters['Ny']+1)
+    r = np.geomspace(parameters['Ymin'],parameters['Ymax'],parameters['Ny']+1)
     
-    density = np.fromfile(data_path).reshape(parameters['Ny'], parameters['Nx'])*sim_units['mass']*np.power(sim_units['length'], 2)
-    g_per_MJ = 1.899e+30
-    cm_per_AU = 1.496e+13
-    density = density * g_per_MJ / (cm_per_AU*cm_per_AU)
+    density = np.fromfile(data_path).reshape(parameters['Ny'], parameters['Nx'])
     
     return phi, r, density
 
-def plot_disk(r, phi, density, parameters, sim_units, cmap='gist_heat'):
+def read_planet_orbit_data(planet_data_path, orbit_data_path, parameters):
+
+    planet = {'i':[],
+              'x':[],
+              'y':[],
+              'z':[],
+              'vx':[],
+              'vy':[],
+              'vz':[],
+              'mass':[],
+              'time':[],
+              'frame_rotation':[]
+             }
+
+    orbit = {'time':[],
+             'ecc':[],
+             'a':[],
+             'mean_anomaly':[],
+             'true_anomaly':[],
+             'arg_periastron':[],
+             'rotation':[],
+             'inclination':[],
+             'lon_asc_node':[],
+             'pa_perihelion':[]
+            }
+
+    with open(orbit_data_path) as f:
+        for line in f:
+            l = [float(el) for el in line.split()]
+            orbit['time'].append(l[0])
+            orbit['ecc'].append(l[1])
+            orbit['a'].append(l[2])
+            orbit['mean_anomaly'].append(l[3])
+            orbit['true_anomaly'].append(l[4])
+            orbit['arg_periastron'].append(l[5])
+            orbit['rotation'].append(l[6])
+            orbit['inclination'].append(l[7])
+            orbit['lon_asc_node'].append(l[8])
+            orbit['pa_perihelion'].append(l[9]) 
+
+    with open(planet_data_path) as f:
+        for line in f:
+            l = [float(el) for el in line.split()]
+            planet['i'].append(l[0])
+            planet['x'].append(l[1])
+            planet['y'].append(l[2])
+            planet['z'].append(l[3])
+            planet['vx'].append(l[4])
+            planet['vy'].append(l[5])
+            planet['vz'].append(l[6])
+            planet['mass'].append(l[7])
+            planet['time'].append(l[8])
+            planet['frame_rotation'].append(l[9])
+
+    return planet, orbit
+
+def plot_disk(r, phi, density, planet_coords, parameters, cmap='gist_heat'):
     font_path =  '/Users/jsn/Library/Fonts/IBMPlexMono-Regular.ttf'  # Your font path goes here
     font_manager.fontManager.addfont(font_path)
     prop = font_manager.FontProperties(fname=font_path)
@@ -35,23 +92,31 @@ def plot_disk(r, phi, density, parameters, sim_units, cmap='gist_heat'):
 
     cmap = plt.get_cmap(cmap)
     
+
     mg_phi, mg_r = np.meshgrid(phi, r)
-    mg_x = mg_r*np.cos(mg_phi)
-    mg_y = mg_r*np.sin(mg_phi)
+    mg_x = mg_r*np.cos(mg_phi) / AU_to_cm
+    mg_y = mg_r*np.sin(mg_phi) / AU_to_cm
 
-    vmin = 1e-8
-    vmax = 1e-5
+    ymax = parameters['Ymax'] / AU_to_cm
+    ymin = parameters['Ymin'] / AU_to_cm
+
+    pc_x = planet_coords[0]/ AU_to_cm
+    pc_y = planet_coords[1]/ AU_to_cm
+
+    vmin = 1e0
+    vmax = 1e5
     img = ax.pcolormesh(mg_x, mg_y, density, cmap=cmap, shading='flat', snap=True, norm=LogNorm(vmin=vmin, vmax=vmax))
+    ax.plot(pc_x, pc_y, marker='x', linestyle='none', color='black', markersize=12)
 
-    outer_circle = plt.Circle((0, 0), parameters['Ymax']*sim_units['length'], ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
-    inner_circle = plt.Circle((0, 0), parameters['Ymin']*sim_units['length'], ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
+    outer_circle = plt.Circle((0, 0), ymax, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
+    inner_circle = plt.Circle((0, 0), ymin, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
     ax.add_patch(outer_circle)
     ax.add_patch(inner_circle)
 
     cbar = fig.colorbar(img, ax=ax, shrink=0.8, pad=0.05)
     cbar.set_label('Density [g/cm$^2$]')
     ax.set_aspect("equal")
-    ax.set_xticks(np.linspace(-parameters['Ymax']*sim_units['length'],parameters['Ymax']*sim_units['length'], 5))
+    ax.set_xticks(np.linspace(-ymax, ymax, 5))
     ax.set_xlabel('[AU]')
     ax.tick_params(axis="x", direction="inout")
     ax.spines['bottom'].set_position(('outward', 15))
@@ -64,42 +129,48 @@ def plot_disk(r, phi, density, parameters, sim_units, cmap='gist_heat'):
 
     return fig, img
 
+def parallel_plot(params):
+    i, r, phi, density, planet_coords, parameters = params
+    fig, img = plot_disk(r, phi, density, planet_coords, parameters)
+    oif = './plots/gasdens{0:03d}.jpg'.format(i)
+    fig.savefig(oif, bbox_inches='tight')
+    plt.close()
+
 def main():
 
-	par_pickle_filename = 'cdi.par.pickle'
-	with open(par_pickle_filename, 'rb') as f:
-		parameters = pickle.load(f)
+    par_pickle_filename = 'cdi.par.pickle'
+    with open(par_pickle_filename, 'rb') as f:
+        parameters = pickle.load(f)
 
-	sim_units_pickle_filename = 'sim_units.pickle'
-	with open(sim_units_pickle_filename, 'rb') as f:
-		sim_units = pickle.load(f)
+    data_folder = '/Users/jsn/landing/data/'
+    latest_run_folder = sorted(glob(os.path.join(data_folder,'cdi_*')))[-1]
 
-	data_folder = '/Users/jsn/landing/data/'
-	latest_run_folder = sorted(glob(os.path.join(data_folder,'cdi_*')))[-1]
+    print('Latest run folder -> {}'.format(latest_run_folder))
 
-	print('Latest run folder -> {}'.format(latest_run_folder))
+    planet_data_path = os.path.join(latest_run_folder,'planet0.dat')
+    orbit_data_path = os.path.join(latest_run_folder,'orbit0.dat')
 
-	data_files = glob(os.path.join(latest_run_folder,'gasdens*.dat'))
+    planet, orbit = read_planet_orbit_data(planet_data_path, orbit_data_path, parameters)
 
-	for el in data_files:
-		if 'gasdens0_2d.dat' in el:
-			data_files.remove(el)
+    n_seconds = 10
+    fps = 24
+    #n_frames = n_seconds*fps # plus one for the initial conditions
+    n_frames = len(glob(os.path.join(latest_run_folder,'gasdens*.dat')))-1
+    data_files = [os.path.join(latest_run_folder, 'gasdens{}.dat') for i in range(n_frames)]
 
-	output_image_filenames = []
-	for i in range(len(data_files)):
+    plot_params=[]
+    print('Loading in {} data frames...'.format(n_frames))
+    for i in tqdm(range(len(data_files))):
 
-		data_filename = 'gasdens{}.dat'.format(i)
-		data_path = os.path.join(latest_run_folder, data_filename)
+        data_filename = 'gasdens{}.dat'.format(i)
+        data_path = os.path.join(latest_run_folder, data_filename)
+        phi, r, density = read_fargo_data(data_path, parameters)
 
-		phi, r, density = read_fargo_data(data_path, parameters, sim_units)
-		fig, img = plot_disk(r, phi, density, parameters, sim_units)
-		oif = './plots/gasdens{0:03d}.jpg'.format(i)
-		print('Plotting -> {}'.format(oif))
-		output_image_filenames.append(oif)
-		fig.savefig(oif, bbox_inches='tight')
+        plot_params.append((i, r, phi, density, (planet['x'][i], planet['y'][i]), parameters))
 
-	#fig.show()
+    print('Parallel plotting...')
+    with Pool() as pool:
+        list(tqdm(pool.imap(parallel_plot, plot_params), total=len(plot_params))) # parallel runs use imap to work with tqdm
 
 if __name__=='__main__':
-	main()
-    #animate()
+    main()

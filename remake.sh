@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# exit on error
+set -e
+
 PREPATH=$(eval echo ~$USER)
 CDIDIR="${PREPATH}/landing/code/cdisk"
 FARGODIR="${PREPATH}/landing/programs/fargo3d"
@@ -12,6 +15,9 @@ cp cdi.cfg ${FARGODIR}/planets
 echo "Copying \"visctensor_cyl.c\" to ${FARGODIR}/src/ ..."
 cp visctensor_cyl.c "${FARGODIR}/src/"
 
+echo "Copying \"fondam.h\" to ${FARGODIR}/src/ ..."
+cp fondam.h "${FARGODIR}/src/"
+
 echo "Generating par file..."
 python3 generate_par.py $1
 
@@ -22,4 +28,4 @@ cd ${FARGODIR}
 
 #make clean
 
-make SETUP=cdi RESCALE=0 UNITS=0 PARALLEL=1
+make SETUP=cdi RESCALE=0 UNITS=CGS PARALLEL=1

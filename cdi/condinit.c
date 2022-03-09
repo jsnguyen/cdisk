@@ -1,7 +1,5 @@
 #include "fargo3d.h"
 
-#define PI 3.14159265359
-
 void Init() {
   
   OUTPUT(Density);
@@ -11,6 +9,8 @@ void Init() {
 
   int i,j,k;
   real r, omega, h, viscosity, soundspeed, vk;
+  real ca, cb, cc;
+  real aspect_ratio;
   
   real *vphi = Vx->field_cpu;
   real *vr   = Vy->field_cpu;
@@ -31,14 +31,24 @@ void Init() {
       r = Ymed(j);
 
       omega = sqrt(G*MSTAR/r/r/r);
-      h = ASPECTRATIO*r;
 
-      soundspeed = h/omega;
+      ca = KB_MU / (G*MSTAR);
+      cb = r * (3.0*G*MSTAR*MASSACCRETION)/(8.0*PI*STEFANK);
+      cc = sqrt(YMAX/r) - 1.0;
+
+      // will be NaN for ghost cells since h=0 if r > r_hill
+      if (r > YMAX) {
+          aspect_ratio =0.0;
+      } else {
+          aspect_ratio = sqrt(ca * pow(cb * cc, 0.25));
+      }
+
+      h = aspect_ratio*r;
+
+      soundspeed = h*omega;
 
       viscosity = ALPHA*soundspeed*h;
 
-      //rho[l] = SIGMA0 * pow(REFERENCERADIUS/r, 5.0/4.0);
-      
       rho[l] = (MASSACCRETION / (3.0*PI*viscosity)) * (sqrt(YMAX/r) - 1.0);
 
 #ifdef ISOTHERMAL
@@ -49,20 +59,12 @@ void Init() {
 #endif
       
       vk = sqrt(G*MSTAR/r);
-      vphi[l] = vk * (1.0 - (13.0/8.0) * ASPECTRATIO*ASPECTRATIO);
+      vphi[l] = vk * (1.0 - (13.0/8.0) * aspect_ratio*aspect_ratio);
       vphi[l] -= OMEGAFRAME*r;
-      vphi[l] *= (1.0+ASPECTRATIO*NOISE*(drand48()-0.5));
+      vphi[l] *= (1.0+aspect_ratio*NOISE*(drand48()-0.5));
       
       vr[l]    = MASSACCRETION / (2.0*PI*r*rho[l]);
 
-      /*
-      vphi[l] = omega*r*sqrt(1.0+pow(ASPECTRATIO,2)*pow(r/R0,2*FLARINGINDEX)*
-			     (2.0*FLARINGINDEX - 1.0 - SIGMASLOPE));
-      vphi[l] -= OMEGAFRAME*r;
-      vphi[l] *= (1.+ASPECTRATIO*NOISE*(drand48()-.5));
-      
-      vr[l]    = soundspeed*NOISE*(drand48()-.5);
-      */
     }
   } 
 }
