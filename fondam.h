@@ -79,4 +79,5 @@ code.
 // Pi
 #define PI 3.14159265359
 
-#define THRESHOLD_STELLAR_MASS 0.05*MSTAR //Our arbitrary threshold to consider an object as stellar.
+//#define THRESHOLD_STELLAR_MASS 0.05*MSTAR //Our arbitrary threshold to consider an object as stellar.
+#define THRESHOLD_STELLAR_MASS 1.0e12*MSTAR // Giant value so that this isn't tripped
