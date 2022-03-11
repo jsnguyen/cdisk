@@ -15,4 +15,7 @@ cm_to_RJ = 1/RJ_to_cm
 G_cgs = 6.67430e-8 # gravitational constant in CGS
 G_sim = 3.784e-17 # gravitational constant in au^3/MJ/sec^2
 
+muJ = 2.83e30 # magnetic moment of jupiter
+mu_naught_cgs = 0.1256637062 # vaccum permeability in CGS
+
 mass_accretion_conversion  = MJ_to_g/yr_to_sec

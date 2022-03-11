@@ -89,15 +89,18 @@ def main():
     star['feels_others'] = 'NO'
     satellites.append(star)
 
-    r_trunc = 5*RJ_to_cm # truncation radius
-    r_hill = star['a'] * np.power(planet['mass'] / (3*star['mass']), 1/3) # hill radius
-
     ########################
     # PARAMETER DEFINITION #
     ########################
 
     # disk parameters
     parameters['MassAccretion'] = 1.0e-7 * mass_accretion_conversion # jupiter mass / year to g / sec
+
+    #r_trunc = 5*RJ_to_cm # truncation radius
+    psi = 1
+    r_trunc = np.power(psi* np.power(muJ, 4) / (2*mu_naught_cgs * G_cgs * planet['mass'] * parameters['MassAccretion'] * parameters['MassAccretion']) ,1/7)
+    r_hill = star['a'] * np.power(planet['mass'] / (3*star['mass']), 1/3) # hill radius
+
     parameters['Rdep'] = r_hill/3.0 # deposit mass at this radius
     parameters['Alpha'] = 0.001
 

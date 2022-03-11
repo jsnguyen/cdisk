@@ -4,7 +4,7 @@ Rdep                             1798909096569.9512
 Alpha                            0.001
 Xmin                             -3.141592653589793
 Xmax                             3.141592653589793
-Ymin                             35746000000.0
+Ymin                             4763887114.436446
 Ymax                             5396727289709.854
 Eccentricity                     0.0
 Spacing                          log
@@ -15,7 +15,7 @@ Ninterm                          1
 Ntot                             240
 Setup                            cdi
 PlanetConfig                     planets/cdi.cfg
-OutputDir                        /Users/jsn/landing/data/cdi_0018
+OutputDir                        /Users/jsn/landing/data/cdi_0019
 OmegaFrame                       0.0
 Frame                            F
 SigmaSlope                       0.8
