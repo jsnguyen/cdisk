@@ -29,7 +29,7 @@ code.
 #define   R_MU_CGS  36149835.0
 #define    MU0_CGS  12.5663706143591   //B in Gauss
 
-#define  MSTAR_CGS  1.899e30 // 1 jupiter mass
+#define  MSTAR_CGS  3.798e30 // 2 jupiter mass
 #define     R0_CGS  1.49597871e13 // 1 AU
 
 #if !(defined(MKS) || defined (CGS))
@@ -61,6 +61,7 @@ code.
 
 // Stefan's constant
 #define STEFANK (5.6705e-5*pow(R_MU/R_MU_CGS,4.0)*pow(G/G_CGS,-2.5)*pow(MSTAR/MSTAR_CGS,-1.5)*pow(R0/R0_CGS,-0.5))
+#define STEFANK_CGS 5.670374e-5
 
 // Speed of light
 #define C0      (2.99792458e10*sqrt(G/G_CGS*MSTAR/MSTAR_CGS/R0*R0_CGS))

@@ -1,6 +1,7 @@
 import os
 import argparse
 import pickle
+import pprint
 
 import numpy as np
 from pathlib import Path
@@ -59,50 +60,68 @@ def main():
     # PLANET DEFINITION #
     #####################
 
-    planet['mass'] = 1.0 * MJ_to_g # make sure MSTAR in fondham.h matches this
+    planet['mass'] = 2.0 * MJ_to_g # make sure MSTAR in fondham.h matches this
 
     ########################
     # SATELLITE DEFINITION #
     ########################
 
     satellites = []
-    # the orbiting satellite
-    s = {}
-    s['name'] = 'CDIb'
-    s['a'] = 0.1 * AU_to_cm
-    s['mass'] = 1.0e-4 *  MJ_to_g
-    s['period'] = 2*np.pi*np.sqrt(np.power(s['a'], 3)/(G_cgs*planet['mass']))
-    s['accretion'] = 0.0
-    s['feels_disk'] = 'YES'
-    s['feels_others'] = 'YES'
-    satellites.append(s)
-
     # the star
     # star orbits the planet in the planet reference frame
     star = {}
     star['name'] = 'CDIa'
-    star['a'] = 5.2029 * AU_to_cm
-    star['mass'] = 1.0e3 *  MJ_to_g
+    star['a'] = 34.3 * AU_to_cm
+    star['mass'] = 1047.57 *  MJ_to_g
     star['period'] = None
     star['accretion'] = 0.0
     star['feels_disk'] = 'NO'
     star['feels_others'] = 'NO'
     satellites.append(star)
 
+    '''
+    # PDS70b
+    other_planet = {}
+    other_planet['name'] = 'CDIb'
+    other_planet['a'] = 5.2029 * AU_to_cm
+    other_planet['mass'] = 1.0e3 *  MJ_to_g
+    other_planet['period'] = None
+    other_planet['accretion'] = 0.0
+    other_planet['feels_disk'] = 'NO'
+    other_planet['feels_others'] = 'NO'
+    satellites.append(other_planet)
+    '''
+
+
+    # the orbiting satellite
+    '''
+    s = {}
+    s['name'] = 'CDIb'
+    s['a'] = 0.1 * AU_to_cm
+    s['mass'] = 1.0e-4 *  MJ_to_g
+    #s['mass'] = 1.0e-12
+    s['period'] = 
+    s['accretion'] = 0.0
+    s['feels_disk'] = 'NO'
+    s['feels_others'] = 'NO'
+    satellites.append(s)
+    '''
+
+
     ########################
     # PARAMETER DEFINITION #
     ########################
 
     # disk parameters
-    parameters['MassAccretion'] = 1.0e-7 * mass_accretion_conversion # jupiter mass / year to g / sec
+    parameters['MassAccretion'] = 1.0e-8 * mass_accretion_conversion # jupiter mass / year to g / sec
 
-    #r_trunc = 5*RJ_to_cm # truncation radius
-    psi = 1
-    r_trunc = np.power(psi* np.power(muJ, 4) / (2*mu_naught_cgs * G_cgs * planet['mass'] * parameters['MassAccretion'] * parameters['MassAccretion']) ,1/7)
+    # scaling relationship for truncation distance
+    r_trunc = 5*RJ_to_cm * np.power(planet['mass'] / (1.0 * MJ_to_g), -1/7) *  np.power(parameters['MassAccretion'] / (1.0e-7 * mass_accretion_conversion), -2/7)
     r_hill = star['a'] * np.power(planet['mass'] / (3*star['mass']), 1/3) # hill radius
+    period_at_radius = 2*np.pi*np.sqrt(np.power( r_hill/3 , 3)/(G_cgs*planet['mass'])) # period at r_hill/2
 
     parameters['Rdep'] = r_hill/3.0 # deposit mass at this radius
-    parameters['Alpha'] = 0.001
+    parameters['Alpha'] = 0.0001
 
     # boundaries
     # x should be a full circle in units of radians
@@ -117,18 +136,26 @@ def main():
 
     # resolution parameters
     parameters['Spacing'] = 'log'
-    grid_power = 7 # number of cells is 2^(n-1) , 2^n
+    grid_power = 8 # number of cells is 2^(n-1) , 2^n
     parameters['Ny'] = int(np.power(2, grid_power-1))
     parameters['Nx'] = int(np.power(2, grid_power))
 
     # timestep parameters
-    parameters['DT'] = satellites[0]['period']/10
-    parameters['Ninterm'] = 1
-    n_sec = 10 # number of seconds for a 24 fps gif
-    parameters['Ntot'] = 24*parameters['Ninterm']*n_sec
+    total_time = (60*60*24*356.25) * 5e3 # 5000 years
+
+    parameters['DT'] = period_at_radius/100
+    parameters['Ninterm'] = 10
+    parameters['Ntot'] = int(total_time / parameters['DT'])
+
+    #parameters['DT'] = satellites[0]['period']/10
+    #parameters['Ninterm'] = 10
+    #n_sec = 10 # number of seconds for a 24 fps gif
+    #parameters['Ntot'] = 24*parameters['Ninterm']*n_sec
 
     # simulation files
-    outputdir = get_outputdir()
+    #outputdir = get_outputdir()
+    prepath = str(os.path.expanduser('~'))
+    outputdir = prepath+'/landing/data/pds70c'
     parameters['Setup'] = 'cdi'
     parameters['PlanetConfig'] = 'planets/cdi.cfg'
     parameters['OutputDir'] =  outputdir
@@ -158,6 +185,9 @@ def main():
     # generate satellite file
     satellite_filename = 'cdi.cfg'
     generate_satellite(satellite_filename, satellites)
+
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(parameters)
 
 if __name__=='__main__':
     main()

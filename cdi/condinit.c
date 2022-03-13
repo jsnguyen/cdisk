@@ -28,7 +28,7 @@ void Init() {
             omega = sqrt(G*MSTAR/r/r/r);
 
             ca = KB_MU / (G*MSTAR);
-            cb = r * (3.0*G*MSTAR*MASSACCRETION)/(8.0*PI*STEFANK);
+            cb = r * (3.0*G*MSTAR*MASSACCRETION)/(8.0*PI*STEFANK_CGS);
             cc = sqrt(YMAX/r) - 1.0;
 
             // will be NaN for ghost cells since h=0 if r > r_hill

@@ -4,8 +4,6 @@ from glob import glob
 import argparse
 from multiprocessing import Pool
 
-from PIL import Image
-
 import numpy as np
 
 from matplotlib import pyplot as plt
@@ -82,8 +80,8 @@ def read_planet_orbit_data(planet_data_path, orbit_data_path, parameters):
 
     return planet, orbit
 
-def plot_disk(r, phi, density, satellite_coords, host_star_coords, parameters, cmap='gist_heat'):
-    font_path =  '/Users/jsn/Library/Fonts/IBMPlexMono-Regular.ttf'  # Your font path goes here
+def plot_disk(r, phi, density, parameters, host_star_coords=None, satellite_coords=None, cmap='gist_heat'):
+    font_path =  './IBMPlexMono-Regular.ttf'  # Your font path goes here
     font_manager.fontManager.addfont(font_path)
     prop = font_manager.FontProperties(fname=font_path)
     plt.rcParams['font.family'] = prop.get_name()
@@ -96,28 +94,31 @@ def plot_disk(r, phi, density, satellite_coords, host_star_coords, parameters, c
     mg_x = mg_r*np.cos(mg_phi) / AU_to_cm / ymax
     mg_y = mg_r*np.sin(mg_phi) / AU_to_cm / ymax
 
-    sc_x = satellite_coords[0]/ AU_to_cm / ymax
-    sc_y = satellite_coords[1]/ AU_to_cm / ymax
-
-    # host star coordinate x,y
-    hsc_x = host_star_coords[0] / AU_to_cm / ymax
-    hsc_y = host_star_coords[1] / AU_to_cm / ymax
-
-    # truncated host star coordinate
-    # this is so that we draw a line from 0 to ymax instead of to some far away distance
-    # makes the plotting pretty
-    host_star_angle = np.arctan2(hsc_y, hsc_x)
-    thsc_x = np.cos(host_star_angle)
-    thsc_y = np.sin(host_star_angle)
-
     cmap = plt.get_cmap(cmap)
     fig,ax = plt.subplots(figsize=(6,6))
 
     vmin = 1e-3
     vmax = 1e5
     img = ax.pcolormesh(mg_x, mg_y, density, cmap=cmap, shading='flat', snap=True, norm=LogNorm(vmin=vmin, vmax=vmax))
-    ax.plot(sc_x, sc_y, marker='x', linestyle='none', color='black', markersize=14)
-    ax.plot([0,thsc_x], [0,thsc_y], linestyle='--', color='black', markersize=12, linewidth=1)
+
+    if host_star_coords is not None:
+        # host star coordinate x,y
+        hsc_x = host_star_coords[0] / AU_to_cm / ymax
+        hsc_y = host_star_coords[1] / AU_to_cm / ymax
+
+        # truncated host star coordinate
+        # this is so that we draw a line from 0 to ymax instead of to some far away distance
+        # makes the plotting pretty
+        host_star_angle = np.arctan2(hsc_y, hsc_x)
+        thsc_x = np.cos(host_star_angle)
+        thsc_y = np.sin(host_star_angle)
+
+        ax.plot([0,thsc_x], [0,thsc_y], linestyle='--', color='black', markersize=12, linewidth=1)
+
+    if satellite_coords is not None:
+        sc_x = satellite_coords[0]/ AU_to_cm / ymax
+        sc_y = satellite_coords[1]/ AU_to_cm / ymax
+        ax.plot(sc_x, sc_y, marker='x', linestyle='none', color='black', markersize=14)
 
     #outer_circle = plt.Circle((0, 0), ymax, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
     #inner_circle = plt.Circle((0, 0), ymin, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
@@ -151,8 +152,8 @@ def plot_disk(r, phi, density, satellite_coords, host_star_coords, parameters, c
     return fig, img
 
 def parallel_plot(params):
-    i, r, phi, density, satellite_coords, host_star_coords, parameters = params
-    fig, img = plot_disk(r, phi, density, satellite_coords, host_star_coords, parameters)
+    i, r, phi, density, parameters, host_star_coords, satellite_coords = params
+    fig, img = plot_disk(r, phi, density, parameters, host_star_coords, satellite_coords)
     oif = './plots/gasdens{0:03d}.jpg'.format(i)
     fig.savefig(oif, bbox_inches='tight')
     plt.close()
@@ -166,7 +167,8 @@ def main():
     with open(par_pickle_filename, 'rb') as f:
         parameters = pickle.load(f)
 
-    data_folder = '/Users/jsn/landing/data/'
+    prepath = str(os.path.expanduser('~'))
+    data_folder = prepath+'/landing/data/'
 
     if args.runfolder is not None:
         run_folder = args.runfolder
@@ -179,12 +181,15 @@ def main():
     n_frames = len(glob(os.path.join(run_folder,'gasdens*.dat')))-1
     data_files = [os.path.join(run_folder, 'gasdens{}.dat') for i in range(n_frames)]
 
-    satellite_data_path = os.path.join(run_folder,'planet0.dat')
-    host_star_data_path = os.path.join(run_folder,'planet1.dat')
+    host_star_data_path = os.path.join(run_folder,'planet0.dat')
+    satellite_data_path = os.path.join(run_folder,'planet1.dat')
     orbit_data_path = os.path.join(run_folder,'orbit0.dat')
 
-    satellite, satellite_orbit = read_planet_orbit_data(satellite_data_path, orbit_data_path, parameters)
     host_star, host_star_orbit = read_planet_orbit_data(host_star_data_path, orbit_data_path, parameters)
+    if os.path.exists(satellite_data_path):
+        satellite, satellite_orbit = read_planet_orbit_data(satellite_data_path, orbit_data_path, parameters)
+    else:
+        satellite = None
 
     plot_params=[]
     print('Loading in {} data frames...'.format(n_frames))
@@ -194,7 +199,10 @@ def main():
         data_path = os.path.join(run_folder, data_filename)
         phi, r, density = read_fargo_data(data_path, parameters)
 
-        plot_params.append((i, r, phi, density, (satellite['x'][i], satellite['y'][i]), (host_star['x'][i], host_star['y'][i]), parameters))
+        if satellite is not None:
+            plot_params.append((i, r, phi, density, parameters, (host_star['x'][i], host_star['y'][i]), (satellite['x'][i], satellite['y'][i])))
+        else:
+            plot_params.append((i, r, phi, density, parameters, (host_star['x'][i], host_star['y'][i]), None))
 
     disk_mass = []
     for params in plot_params:
@@ -212,7 +220,8 @@ def main():
     fig.savefig('./plots/disk_mass.jpg', bbox_inches='tight')
 
     print('Parallel plotting...')
-    with Pool() as pool:
+    n_cpu = 32
+    with Pool(n_cpu) as pool:
         list(tqdm(pool.imap(parallel_plot, plot_params), total=len(plot_params))) # parallel runs use imap to work with tqdm
 
 if __name__=='__main__':
