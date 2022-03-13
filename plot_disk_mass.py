@@ -80,83 +80,6 @@ def read_planet_orbit_data(planet_data_path, orbit_data_path, parameters):
 
     return planet, orbit
 
-def plot_disk(r, phi, density, parameters, host_star_coords=None, satellite_coords=None, cmap='gist_heat'):
-    font_path =  './IBMPlexMono-Regular.ttf'  # Your font path goes here
-    font_manager.fontManager.addfont(font_path)
-    prop = font_manager.FontProperties(fname=font_path)
-    plt.rcParams['font.family'] = prop.get_name()
-    plt.rcParams['savefig.facecolor'] = (1.0, 1.0, 1.0)
-    
-    ymax = parameters['Ymax'] / AU_to_cm 
-    ymin = parameters['Ymin'] / AU_to_cm
-    
-    mg_phi, mg_r = np.meshgrid(phi, r)
-    mg_x = mg_r*np.cos(mg_phi) / AU_to_cm / ymax
-    mg_y = mg_r*np.sin(mg_phi) / AU_to_cm / ymax
-
-    cmap = plt.get_cmap(cmap)
-    fig,ax = plt.subplots(figsize=(6,6))
-
-    vmin = 1e-3
-    vmax = 1e5
-    img = ax.pcolormesh(mg_x, mg_y, density, cmap=cmap, shading='flat', snap=True, norm=LogNorm(vmin=vmin, vmax=vmax))
-
-    if host_star_coords is not None:
-        # host star coordinate x,y
-        hsc_x = host_star_coords[0] / AU_to_cm / ymax
-        hsc_y = host_star_coords[1] / AU_to_cm / ymax
-
-        # truncated host star coordinate
-        # this is so that we draw a line from 0 to ymax instead of to some far away distance
-        # makes the plotting pretty
-        host_star_angle = np.arctan2(hsc_y, hsc_x)
-        thsc_x = np.cos(host_star_angle)
-        thsc_y = np.sin(host_star_angle)
-
-        ax.plot([0,thsc_x], [0,thsc_y], linestyle='--', color='black', markersize=12, linewidth=1)
-
-    if satellite_coords is not None:
-        sc_x = satellite_coords[0]/ AU_to_cm / ymax
-        sc_y = satellite_coords[1]/ AU_to_cm / ymax
-        ax.plot(sc_x, sc_y, marker='x', linestyle='none', color='black', markersize=14)
-
-    #outer_circle = plt.Circle((0, 0), ymax, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
-    #inner_circle = plt.Circle((0, 0), ymin, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
-    outer_circle = plt.Circle((0, 0), 1, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
-    inner_circle = plt.Circle((0, 0), ymin/ymax, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
-    r_hill_frac_circle = plt.Circle((0, 0), 0.3, ec='black', linewidth=1.2, fc='none', linestyle='-', alpha=0.5, clip_on=False)
-    
-    ax.add_patch(outer_circle)
-    ax.add_patch(inner_circle)
-    ax.add_patch(r_hill_frac_circle)
-
-    cbar = fig.colorbar(img, ax=ax, shrink=0.8, pad=0.05)
-    cbar.set_label('Density [g/cm$^2$]')
-    cbar.ax.tick_params(labelsize=9)
-    ax.set_aspect("equal")
-    #ax.set_xlim(-ymax, ymax)
-    #ax.set_ylim(-ymax, ymax)
-    ax.set_xlim(-1, 1)
-    ax.set_ylim(-1, 1)
-    ax.set_xticks(np.linspace(-1, 1, 9))
-    ax.set_xlabel('[${r}/{r_h}$]')
-    ax.tick_params(axis="x", direction="inout", labelsize=9)
-    ax.spines['bottom'].set_position(('outward', 15))
-
-    ax.get_yaxis().set_visible(False)
-    ax.spines['left'].set_visible(False)
-
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-
-    return fig, img
-
-def parallel_plot(params):
-    i, r, phi, density, parameters, host_star_coords, satellite_coords = params
-    fig, img = plot_disk(r, phi, density, parameters, host_star_coords, satellite_coords)
-    oif = './plots/gasdens{0:03d}.jpg'.format(i)
-    fig.savefig(oif, bbox_inches='tight')
-    plt.close()
 
 def main():
     parser = argparse.ArgumentParser(description='Plot cdisk plots.')
@@ -216,15 +139,12 @@ def main():
         disk_mass.append(mass)
 
     dt = parameters['DT']
-    times = dt * np.arange(0, len(data_files), 1)
+    sec_to_year = 60*60*24*365.25
+    times = dt * np.arange(0, len(data_files), 1) / sec_to_year
     fig,ax = plt.subplots(figsize=(6,6))
     ax.plot(times, disk_mass)
+    ax.set_yscale('log')
     fig.savefig('./plots/disk_mass.jpg', bbox_inches='tight')
-
-    print('Parallel plotting...')
-    n_cpu = 8
-    with Pool(n_cpu) as pool:
-        list(tqdm(pool.imap(parallel_plot, plot_params), total=len(plot_params))) # parallel runs use imap to work with tqdm
 
 if __name__=='__main__':
     main()

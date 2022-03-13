@@ -79,34 +79,6 @@ def main():
     star['feels_others'] = 'NO'
     satellites.append(star)
 
-    '''
-    # PDS70b
-    other_planet = {}
-    other_planet['name'] = 'CDIb'
-    other_planet['a'] = 5.2029 * AU_to_cm
-    other_planet['mass'] = 1.0e3 *  MJ_to_g
-    other_planet['period'] = None
-    other_planet['accretion'] = 0.0
-    other_planet['feels_disk'] = 'NO'
-    other_planet['feels_others'] = 'NO'
-    satellites.append(other_planet)
-    '''
-
-
-    # the orbiting satellite
-    '''
-    s = {}
-    s['name'] = 'CDIb'
-    s['a'] = 0.1 * AU_to_cm
-    s['mass'] = 1.0e-4 *  MJ_to_g
-    #s['mass'] = 1.0e-12
-    s['period'] = 
-    s['accretion'] = 0.0
-    s['feels_disk'] = 'NO'
-    s['feels_others'] = 'NO'
-    satellites.append(s)
-    '''
-
 
     ########################
     # PARAMETER DEFINITION #
@@ -120,6 +92,19 @@ def main():
     r_hill = star['a'] * np.power(planet['mass'] / (3*star['mass']), 1/3) # hill radius
     period_at_radius = 2*np.pi*np.sqrt(np.power( r_hill/3 , 3)/(G_cgs*planet['mass'])) # period at r_hill/2
 
+    '''
+    # the orbiting satellite
+    s = {}
+    s['name'] = 'CDIS'
+    s['a'] = r_hill/3.0
+    s['mass'] = 1.0e-9 *  MJ_to_g
+    s['period'] = None
+    s['accretion'] = 0.0
+    s['feels_disk'] = 'YES'
+    s['feels_others'] = 'YES'
+    satellites.append(s)
+    '''
+
     parameters['Rdep'] = r_hill/3.0 # deposit mass at this radius
     parameters['Alpha'] = 0.0001
 
@@ -128,7 +113,8 @@ def main():
     parameters['Xmin'] = -np.pi
     parameters['Xmax'] = np.pi
     # inner/outer annulus distance
-    parameters['Ymin'] = r_trunc
+    #parameters['Ymin'] = r_trunc
+    parameters['Ymin'] = r_hill*0.05
     parameters['Ymax'] = r_hill
 
     # initial eccentricity of the planets
@@ -136,15 +122,15 @@ def main():
 
     # resolution parameters
     parameters['Spacing'] = 'log'
-    grid_power = 8 # number of cells is 2^(n-1) , 2^n
+    grid_power = 7 # number of cells is 2^(n-1) , 2^n
     parameters['Ny'] = int(np.power(2, grid_power-1))
     parameters['Nx'] = int(np.power(2, grid_power))
 
     # timestep parameters
-    total_time = (60*60*24*356.25) * 5e3 # 5000 years
+    total_time = 1e5 * year_to_sec
 
-    parameters['DT'] = period_at_radius/100
-    parameters['Ninterm'] = 10
+    parameters['DT'] = period_at_radius/10
+    parameters['Ninterm'] = 1
     parameters['Ntot'] = int(total_time / parameters['DT'])
 
     #parameters['DT'] = satellites[0]['period']/10

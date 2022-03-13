@@ -5,8 +5,7 @@ set -e
 
 PREPATH=$(eval echo ~$USER)
 FARGODIR="${PREPATH}/landing/programs/fargo3d"
-#NCPU=$(grep -c ^processor /proc/cpuinfo)
-NCPU=32
+NCPU=4
 
 cd ${FARGODIR}
 
