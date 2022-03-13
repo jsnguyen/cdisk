@@ -79,7 +79,6 @@ def main():
     star['feels_others'] = 'NO'
     satellites.append(star)
 
-
     ########################
     # PARAMETER DEFINITION #
     ########################
@@ -122,12 +121,12 @@ def main():
 
     # resolution parameters
     parameters['Spacing'] = 'log'
-    grid_power = 7 # number of cells is 2^(n-1) , 2^n
+    grid_power = 8 # number of cells is 2^(n-1) , 2^n
     parameters['Ny'] = int(np.power(2, grid_power-1))
     parameters['Nx'] = int(np.power(2, grid_power))
 
     # timestep parameters
-    total_time = 1e5 * year_to_sec
+    total_time = 1e5 * yr_to_sec
 
     parameters['DT'] = period_at_radius/10
     parameters['Ninterm'] = 1
