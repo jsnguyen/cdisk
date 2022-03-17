@@ -126,7 +126,7 @@ def main():
     parameters['Nx'] = int(np.power(2, grid_power))
 
     # timestep parameters
-    total_time = 1e5 * yr_to_sec
+    total_time = 1e6 * yr_to_sec
 
     parameters['DT'] = period_at_radius/10
     parameters['Ninterm'] = 1
@@ -140,7 +140,8 @@ def main():
     # simulation files
     #outputdir = get_outputdir()
     prepath = str(os.path.expanduser('~'))
-    outputdir = prepath+'/landing/data/pds70c'
+    #outputdir = prepath+'/landing/data/pds70c'
+    outputdir = prepath+'/landing/data/pds70c_nominal_long'
     parameters['Setup'] = 'cdi'
     parameters['PlanetConfig'] = 'planets/cdi.cfg'
     parameters['OutputDir'] =  outputdir

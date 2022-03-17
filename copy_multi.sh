@@ -13,7 +13,40 @@ FD2="${PREPATH}/landing/programs/f3d2"
 FD3="${PREPATH}/landing/programs/f3d3"
 FD4="${PREPATH}/landing/programs/f3d4"
 
-for FARGODIR in ${FD1} ${FD2} ${FD3} ${FD4}; do
+if [[ "${1}" == "1" ]]; then
+    FDS=(${FD1})
+fi
+
+case ${1} in
+
+  "1")
+    FDS=(${FD1})
+    ;;
+
+  "2")
+    FDS=(${FD2})
+    ;;
+
+  "3")
+    FDS=(${FD3})
+    ;;
+
+  "4")
+    FDS=(${FD4})
+    ;;
+
+  "all")
+    FDS=(${FD1} ${FD2} ${FD3} ${FD4})
+    ;;
+
+  *)
+    echo "Usage: ./run_multi.sh <1, 2, 3, 4, all>"
+    exit
+    ;;
+esac
+
+
+for FARGODIR in  ${FDS}; do
 
     cd ${CDIDIR}
 

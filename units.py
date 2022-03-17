@@ -19,3 +19,6 @@ muJ = 2.83e30 # magnetic moment of jupiter
 mu_naught_cgs = 0.1256637062 # vaccum permeability in CGS
 
 mass_accretion_conversion  = MJ_to_g/yr_to_sec
+
+kb_cgs = 1.380649e-16
+stefan_cgs= 5.670374e-5

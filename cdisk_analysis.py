@@ -1,13 +1,37 @@
+import os
+from glob import glob
+
 import numpy as np
 
+def read_fargo_data(i, run_folder, parameters):
 
-def read_fargo_data(data_path, parameters):
-    phi = np.linspace(parameters['Xmin'], parameters['Xmax'], parameters['Nx']+1)
-    r = np.geomspace(parameters['Ymin'],parameters['Ymax'],parameters['Ny']+1)
+    data_filename = 'gasdens{}.dat'.format(i)
+    data_path = os.path.join(run_folder, data_filename)
+
+    phi = np.linspace(parameters['XMIN'], parameters['XMAX'], parameters['NX']+1)
+    r = np.geomspace(parameters['YMIN'],parameters['YMAX'],parameters['NY']+1)
     
-    density = np.fromfile(data_path).reshape(parameters['Ny'], parameters['Nx'])
+    density = np.fromfile(data_path).reshape(parameters['NY'], parameters['NX'])
     
     return phi, r, density
+
+def read_parameters(run_folder):
+    variables_filename = 'variables.par'
+    variables_path = os.path.join(run_folder, variables_filename)
+
+    parameters = {}
+    with open(variables_path, 'r') as f:
+        for line in f:
+            l = line.split()
+            if l[1].isdigit():
+                parameters[l[0]] = int(l[1])
+            else:
+                try:
+                    parameters[l[0]] = float(l[1])
+                except:
+                    parameters[l[0]] = l[1]
+
+    return parameters
 
 def read_planet_orbit_data(planet_data_path, orbit_data_path):
 

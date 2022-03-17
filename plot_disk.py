@@ -15,141 +15,7 @@ from matplotlib.colors import LogNorm
 from tqdm import tqdm
 
 from units import *
-
-def read_fargo_data(data_path, parameters):
-    phi = np.linspace(parameters['Xmin'], parameters['Xmax'], parameters['Nx']+1)
-    r = np.geomspace(parameters['Ymin'],parameters['Ymax'],parameters['Ny']+1)
-    
-    density = np.fromfile(data_path).reshape(parameters['Ny'], parameters['Nx'])
-    
-    return phi, r, density
-
-def read_planet_orbit_data(planet_data_path, orbit_data_path, parameters):
-
-    planet = {'i':[],
-              'x':[],
-              'y':[],
-              'z':[],
-              'vx':[],
-              'vy':[],
-              'vz':[],
-              'mass':[],
-              'time':[],
-              'frame_rotation':[]
-             }
-
-    orbit = {'time':[],
-             'ecc':[],
-             'a':[],
-             'mean_anomaly':[],
-             'true_anomaly':[],
-             'arg_periastron':[],
-             'rotation':[],
-             'inclination':[],
-             'lon_asc_node':[],
-             'pa_perihelion':[]
-            }
-
-    with open(orbit_data_path) as f:
-        for line in f:
-            l = [float(el) for el in line.split()]
-            orbit['time'].append(l[0])
-            orbit['ecc'].append(l[1])
-            orbit['a'].append(l[2])
-            orbit['mean_anomaly'].append(l[3])
-            orbit['true_anomaly'].append(l[4])
-            orbit['arg_periastron'].append(l[5])
-            orbit['rotation'].append(l[6])
-            orbit['inclination'].append(l[7])
-            orbit['lon_asc_node'].append(l[8])
-            orbit['pa_perihelion'].append(l[9]) 
-
-    with open(planet_data_path) as f:
-        for line in f:
-            l = [float(el) for el in line.split()]
-            planet['i'].append(l[0])
-            planet['x'].append(l[1])
-            planet['y'].append(l[2])
-            planet['z'].append(l[3])
-            planet['vx'].append(l[4])
-            planet['vy'].append(l[5])
-            planet['vz'].append(l[6])
-            planet['mass'].append(l[7])
-            planet['time'].append(l[8])
-            planet['frame_rotation'].append(l[9])
-
-    return planet, orbit
-
-def plot_disk(r, phi, density, parameters, host_star_coords=None, satellite_coords=None, cmap='gist_heat'):
-    font_path =  './IBMPlexMono-Regular.ttf'  # Your font path goes here
-    font_manager.fontManager.addfont(font_path)
-    prop = font_manager.FontProperties(fname=font_path)
-    plt.rcParams['font.family'] = prop.get_name()
-    plt.rcParams['savefig.facecolor'] = (1.0, 1.0, 1.0)
-    
-    ymax = parameters['Ymax'] / AU_to_cm 
-    ymin = parameters['Ymin'] / AU_to_cm
-    
-    mg_phi, mg_r = np.meshgrid(phi, r)
-    mg_x = mg_r*np.cos(mg_phi) / AU_to_cm / ymax
-    mg_y = mg_r*np.sin(mg_phi) / AU_to_cm / ymax
-
-    cmap = plt.get_cmap(cmap)
-    fig,ax = plt.subplots(figsize=(6,6))
-
-    vmin = 1e-3
-    vmax = 1e5
-    img = ax.pcolormesh(mg_x, mg_y, density, cmap=cmap, shading='flat', snap=True, norm=LogNorm(vmin=vmin, vmax=vmax))
-
-    if host_star_coords is not None:
-        # host star coordinate x,y
-        hsc_x = host_star_coords[0] / AU_to_cm / ymax
-        hsc_y = host_star_coords[1] / AU_to_cm / ymax
-
-        # truncated host star coordinate
-        # this is so that we draw a line from 0 to ymax instead of to some far away distance
-        # makes the plotting pretty
-        host_star_angle = np.arctan2(hsc_y, hsc_x)
-        thsc_x = np.cos(host_star_angle)
-        thsc_y = np.sin(host_star_angle)
-
-        ax.plot([0,thsc_x], [0,thsc_y], linestyle='--', color='black', markersize=12, linewidth=1)
-
-    if satellite_coords is not None:
-        sc_x = satellite_coords[0]/ AU_to_cm / ymax
-        sc_y = satellite_coords[1]/ AU_to_cm / ymax
-        ax.plot(sc_x, sc_y, marker='x', linestyle='none', color='black', markersize=14)
-
-    #outer_circle = plt.Circle((0, 0), ymax, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
-    #inner_circle = plt.Circle((0, 0), ymin, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
-    outer_circle = plt.Circle((0, 0), 1, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
-    inner_circle = plt.Circle((0, 0), ymin/ymax, ec='black', linewidth=0.8, fc='none', linestyle='-', clip_on=False)
-    r_hill_frac_circle = plt.Circle((0, 0), 0.3, ec='black', linewidth=1.2, fc='none', linestyle='-', alpha=0.5, clip_on=False)
-    
-    ax.add_patch(outer_circle)
-    ax.add_patch(inner_circle)
-    ax.add_patch(r_hill_frac_circle)
-
-    cbar = fig.colorbar(img, ax=ax, shrink=0.8, pad=0.05)
-    cbar.set_label('Density [g/cm$^2$]')
-    cbar.ax.tick_params(labelsize=9)
-    ax.set_aspect("equal")
-    #ax.set_xlim(-ymax, ymax)
-    #ax.set_ylim(-ymax, ymax)
-    ax.set_xlim(-1, 1)
-    ax.set_ylim(-1, 1)
-    ax.set_xticks(np.linspace(-1, 1, 9))
-    ax.set_xlabel('[${r}/{r_h}$]')
-    ax.tick_params(axis="x", direction="inout", labelsize=9)
-    ax.spines['bottom'].set_position(('outward', 15))
-
-    ax.get_yaxis().set_visible(False)
-    ax.spines['left'].set_visible(False)
-
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-
-    return fig, img
+from cdisk_analysis import *
 
 def parallel_plot(params):
     i, r, phi, density, parameters, host_star_coords, satellite_coords = params
@@ -185,9 +51,9 @@ def main():
     satellite_data_path = os.path.join(run_folder,'planet1.dat')
     orbit_data_path = os.path.join(run_folder,'orbit0.dat')
 
-    host_star, host_star_orbit = read_planet_orbit_data(host_star_data_path, orbit_data_path, parameters)
+    host_star, host_star_orbit = read_planet_orbit_data(host_star_data_path, orbit_data_path)
     if os.path.exists(satellite_data_path):
-        satellite, satellite_orbit = read_planet_orbit_data(satellite_data_path, orbit_data_path, parameters)
+        satellite, satellite_orbit = read_planet_orbit_data(satellite_data_path, orbit_data_path)
     else:
         satellite = None
 
@@ -203,23 +69,6 @@ def main():
             plot_params.append((i, r, phi, density, parameters, (host_star['x'][i], host_star['y'][i]), (satellite['x'][i], satellite['y'][i])))
         else:
             plot_params.append((i, r, phi, density, parameters, (host_star['x'][i], host_star['y'][i]), None))
-
-    disk_mass = []
-    for params in plot_params:
-        r = params[1]
-        phi = params[2]
-        density = params[3]
-
-        diff = r[1:] - r[:-1]
-        dx = 2*np.pi/parameters['Nx']
-        mass = np.sum(dx*(density.T * diff).T)
-        disk_mass.append(mass)
-
-    dt = parameters['DT']
-    times = dt * np.arange(0, len(data_files), 1)
-    fig,ax = plt.subplots(figsize=(6,6))
-    ax.plot(times, disk_mass)
-    fig.savefig('./plots/disk_mass.jpg', bbox_inches='tight')
 
     print('Parallel plotting...')
     n_cpu = 8

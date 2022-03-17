@@ -29,7 +29,7 @@ code.
 #define   R_MU_CGS  36149835.0
 #define    MU0_CGS  12.5663706143591   //B in Gauss
 
-#define  MSTAR_CGS  3.798e30 // 2 jupiter mass
+#define  MSTAR_CGS  (2.0*1.89813e30) // 2 jupiter mass
 #define     R0_CGS  1.49597871e13 // 1 AU
 
 #if !(defined(MKS) || defined (CGS))

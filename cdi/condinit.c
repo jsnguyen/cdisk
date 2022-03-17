@@ -73,7 +73,7 @@ void DepositMass() {
 
         if ( r > RDEP ){
             for (i=0; i<Nx+2*NGHX; i++) {
-                cell_area = (PI*(Ymin(j+1)*Ymin(j+1) - Ymin(j)*Ymin(j))); 
+                cell_area = (PI*(Ymin(j+1)*Ymin(j+1) - Ymin(j)*Ymin(j))) / Nx; 
                 rho[l] += MASSACCRETION*DT / cell_area;
             }
             break;

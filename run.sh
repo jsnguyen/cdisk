@@ -5,7 +5,7 @@ set -e
 
 PREPATH=$(eval echo ~$USER)
 FARGODIR="${PREPATH}/landing/programs/fargo3d"
-NCPU=4
+NCPU=32
 
 cd ${FARGODIR}
 
