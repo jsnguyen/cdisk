@@ -42,11 +42,11 @@ def generate_satellite(satellite_filename, satellites):
 def get_outputdir():
     increment=0
     prepath = str(Path.home())
-    outputdir = prepath+'/landing/data/cdi_'+str(increment).zfill(4)
+    outputdir = prepath+'/landing/data/cdisk_data/cdi_'+str(increment).zfill(4)
 
     while os.path.isdir(outputdir):
         increment+=1
-        outputdir = prepath+'/landing/data/cdi_'+str(increment).zfill(4)
+        outputdir = prepath+'/landing/data/cdisk_data/cdi_'+str(increment).zfill(4)
 
     return outputdir
         
@@ -140,8 +140,8 @@ def main():
     # simulation files
     #outputdir = get_outputdir()
     prepath = str(os.path.expanduser('~'))
-    #outputdir = prepath+'/landing/data/pds70c'
-    outputdir = prepath+'/landing/data/pds70c_nominal_long'
+    #outputdir = prepath+'/landing/data/cdisk_data/pds70c'
+    outputdir = prepath+'/landing/data/cdisk_data/pds70c_nominal_long_fixed'
     parameters['Setup'] = 'cdi'
     parameters['PlanetConfig'] = 'planets/cdi.cfg'
     parameters['OutputDir'] =  outputdir
