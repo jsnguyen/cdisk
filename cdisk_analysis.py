@@ -8,8 +8,25 @@ def read_fargo_data(i, run_folder, parameters):
     data_filename = 'gasdens{}.dat'.format(i)
     data_path = os.path.join(run_folder, data_filename)
 
-    phi = np.linspace(parameters['XMIN'], parameters['XMAX'], parameters['NX']+1)
-    r = np.geomspace(parameters['YMIN'],parameters['YMAX'],parameters['NY']+1)
+    domain_x_path = os.path.join(run_folder, 'domain_x.dat')
+    domain_y_path = os.path.join(run_folder, 'domain_y.dat')
+
+    phi = np.zeros(parameters['NX'] + 1)
+    with open(domain_x_path, 'r') as f:
+        count = 0
+        for i,line in enumerate(f):
+            phi[count] = float(line)
+            count+=1
+
+    n_ghost = 3
+    r = np.zeros(parameters['NY'] + (n_ghost*2) + 1)
+    with open(domain_y_path, 'r') as f:
+        count = 0
+        for i,line in enumerate(f):
+            r[count] = float(line)
+            count+=1
+
+    r = r[n_ghost:-n_ghost]
     
     density = np.fromfile(data_path).reshape(parameters['NY'], parameters['NX'])
     

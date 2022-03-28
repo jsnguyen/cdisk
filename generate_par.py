@@ -126,7 +126,7 @@ def main():
     parameters['Nx'] = int(np.power(2, grid_power))
 
     # timestep parameters
-    total_time = 1e6 * yr_to_sec
+    total_time = 5e4 * yr_to_sec
 
     parameters['DT'] = period_at_radius/10
     parameters['Ninterm'] = 1
@@ -141,7 +141,7 @@ def main():
     #outputdir = get_outputdir()
     prepath = str(os.path.expanduser('~'))
     #outputdir = prepath+'/landing/data/cdisk_data/pds70c'
-    outputdir = prepath+'/landing/data/cdisk_data/pds70c_nominal_long_fixed'
+    outputdir = prepath+'/landing/data/cdisk_data/closed_system'
     parameters['Setup'] = 'cdi'
     parameters['PlanetConfig'] = 'planets/cdi.cfg'
     parameters['OutputDir'] =  outputdir
@@ -170,7 +170,7 @@ def main():
 
     # generate satellite file
     satellite_filename = 'cdi.cfg'
-    generate_satellite(satellite_filename, satellites)
+    #generate_satellite(satellite_filename, satellites)
 
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(parameters)

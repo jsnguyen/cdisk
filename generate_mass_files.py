@@ -19,7 +19,11 @@ def main():
 
     parameters = read_parameters(run_folder)
 
-    mass_file = './data/disk_mass_{}.npy'.format(os.path.basename(os.path.dirname(run_folder)))
+    ending = run_folder.split('/')[-1]
+    if ending == '':
+        ending = run_folder.split('/')[-2]
+
+    mass_file = './data/disk_mass_{}.npy'.format(ending)
     print('Writing mass file -> {}'.format(mass_file))
 
     n_frames = len(glob(os.path.join(run_folder,'gasdens*.dat')))-1
@@ -30,9 +34,12 @@ def main():
 
         phi, r, density = read_fargo_data(i, run_folder, parameters)
 
-        diff = r[1:] - r[:-1]
-        dx = (2*np.pi/parameters['NX'])*r[1:]
-        mass = np.sum(density.T * diff*dx)
+        #diff = r[1:] - r[:-1]
+        #dx = (2*np.pi/parameters['NX'])*r[1:]
+        #mass = np.sum(density.T * diff*dx)
+        area = np.pi * (r[1:]*r[1:] - r[:-1]*r[:-1]) / parameters['NX']
+        mass = np.sum(density.T * area)
+
         disk_mass[i] = mass
 
     with open(mass_file, 'wb') as f:
